@@ -600,15 +600,23 @@ const Net = (() => {
 const Conn = {
   // 배포 전 아래 두 값을 채우면 학생은 입력 없이 QR/링크로 바로 접속됩니다.
   baked: {
-    URL: "https://hdzrkoqvuntjtwcfftnt.supabase.co/rest/v1/",   // 선생님 여기 따옴표 사이에 넣으세요 예: https://abcdwxyz.supabase.co
+    URL: "https://hdzrkoqvuntjtwcfftnt.supabase.co",   // 선생님 여기 따옴표 사이에 넣으세요 예: https://abcdwxyz.supabase.co
     KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkenJrb3F2dW50anR3Y2ZmdG50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MzgyNDgsImV4cCI6MjA5NzQxNDI0OH0.gcXo3LJ84dCfR8b3qKcgH6T4nnBwbjAliiPWo3NHT0Q",   // 선생님 여기 따옴표 사이에 넣으세요  Legacy anon key (eyJ... 로 시작). Settings → API → Project API keys → anon public
   },
+  normalizeUrl(url){
+    return String(url||'').trim().replace(/\/rest\/v1\/?$/i, '').replace(/\/+$/, '');
+  },
   cfg(){
-    if (this.baked.URL && this.baked.KEY) return { url:this.baked.URL, key:this.baked.KEY };
-    try { const s = JSON.parse(localStorage.getItem('shadow-cfg')||'null'); if(s&&s.url&&s.key) return s; } catch(e){}
+    const bakedUrl = this.normalizeUrl(this.baked.URL);
+    if (bakedUrl && this.baked.KEY) return { url:bakedUrl, key:this.baked.KEY };
+    try {
+      const s = JSON.parse(localStorage.getItem('shadow-cfg')||'null');
+      const savedUrl = s && this.normalizeUrl(s.url);
+      if(s&&savedUrl&&s.key) return { url:savedUrl, key:s.key };
+    } catch(e){}
     return null;
   },
-  saveCfg(url, key){ try { localStorage.setItem('shadow-cfg', JSON.stringify({url,key})); } catch(e){} },
+  saveCfg(url, key){ try { localStorage.setItem('shadow-cfg', JSON.stringify({url:this.normalizeUrl(url),key})); } catch(e){} },
   makeRoom(){ const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let i=0;i<4;i++) r+=a[Math.random()*a.length|0]; return r; },
   joinURL(room){ return location.origin + location.pathname + '#join=' + room; },
 };
